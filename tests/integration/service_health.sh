@@ -26,8 +26,23 @@ fi
 echo "サービスの状態を確認しています..."
 sleep 5  # サービスの起動を待つ
 
+# PostgreSQLの起動を待つ
+echo "PostgreSQLの準備を待っています..."
+for i in {1..30}; do
+    if docker compose exec kong-database pg_isready -U kong > /dev/null 2>&1; then
+        echo -e "${GREEN}✓ PostgreSQLが準備完了しました${NC}"
+        break
+    fi
+    if [ $i -eq 30 ]; then
+        echo -e "${RED}エラー: PostgreSQLの準備が完了しませんでした${NC}"
+        cleanup 1
+    fi
+    echo "PostgreSQLの準備を待っています... ($i/30)"
+    sleep 1
+done
+
 # 各サービスの確認
-services=("kong" "orion" "mongo")
+services=("kong-database" "kong" "orion" "mongo")
 failed=false
 
 for service in "${services[@]}"; do
@@ -41,7 +56,14 @@ if [ "$failed" = true ]; then
     cleanup 1
 fi
 
-echo -e "${GREEN}すべてのサービスが正常に起動しました！${NC}"
+# Kongのマイグレーションを実行
+echo "Kongのマイグレーションを実行しています..."
+if ! docker compose run --rm kong kong migrations bootstrap; then
+    echo -e "${RED}エラー: Kongのマイグレーションに失敗しました${NC}"
+    cleanup 1
+fi
+
+echo -e "${GREEN}すべてのサービスが正常に起動し、マイグレーションが完了しました！${NC}"
 echo "以下のエンドポイントにアクセスできます："
 echo "- Kong Admin API: http://localhost:8001"
 echo "- Kong Proxy: http://localhost:8000"

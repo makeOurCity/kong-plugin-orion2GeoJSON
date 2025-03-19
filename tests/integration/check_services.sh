@@ -49,14 +49,7 @@ if [ "$failed" = true ]; then
     cleanup 1
 fi
 
-# Kongのマイグレーションを実行
-echo "Kongのマイグレーションを実行しています..."
-if ! docker compose run --rm kong kong migrations bootstrap; then
-    echo -e "${RED}エラー: Kongのマイグレーションに失敗しました${NC}"
-    cleanup 1
-fi
-
-echo -e "${GREEN}すべてのサービスが正常に起動し、マイグレーションが完了しました！${NC}"
+echo -e "${GREEN}すべてのサービスが正常に起動しています！${NC}"
 echo "以下のエンドポイントにアクセスできます："
 echo "- Kong Admin API: http://localhost:8001"
 echo "- Kong Proxy: http://localhost:8000"

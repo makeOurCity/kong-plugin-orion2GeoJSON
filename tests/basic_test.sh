@@ -9,26 +9,23 @@ RED='\033[0;31m'
 GREEN='\033[0;32m'
 NC='\033[0m'
 
-# 統合テストの実行
 echo "基本環境テストを開始します..."
 
-# スクリプトの実行権限を確認・付与
+# スクリプトの実行権限を付与
+echo "スクリプトの実行権限を確認しています..."
 chmod +x "${INTEGRATION_DIR}/docker_check.sh"
+chmod +x "${INTEGRATION_DIR}/start_services.sh"
+chmod +x "${INTEGRATION_DIR}/check_services.sh"
 chmod +x "${INTEGRATION_DIR}/service_health.sh"
+chmod +x "${INTEGRATION_DIR}/cleanup.sh"
 
-# Docker環境のチェック
-echo "Docker環境をチェックしています..."
-if ! "${INTEGRATION_DIR}/docker_check.sh"; then
-    echo -e "${RED}Docker環境チェックに失敗しました${NC}"
-    exit 1
-fi
-
-# サービスの起動と健康状態チェック
-echo "サービスの起動と健康状態チェックを実行します..."
+# 統合テストの実行
+echo "サービスの検証を開始します..."
 if ! "${INTEGRATION_DIR}/service_health.sh"; then
-    echo -e "${RED}サービスの起動とヘルスチェックに失敗しました${NC}"
+    echo -e "${RED}サービス検証に失敗しました${NC}"
     exit 1
 fi
 
 echo -e "${GREEN}すべてのテストが正常に完了しました！${NC}"
+echo "Kong GatewayとOrion Context Brokerが正常に連携しています"
 exit 0

@@ -15,13 +15,6 @@ check_container() {
     return 0
 }
 
-# サービスの起動
-echo "サービスを起動しています..."
-if ! docker compose up -d; then
-    echo -e "${RED}エラー: サービスの起動に失敗しました${NC}"
-    cleanup 1
-fi
-
 # サービスの状態確認
 echo "サービスの状態を確認しています..."
 sleep 5  # サービスの起動を待つ

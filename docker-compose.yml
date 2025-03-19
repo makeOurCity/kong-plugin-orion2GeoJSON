@@ -33,6 +33,9 @@ services:
       KONG_SSL: "off"
       KONG_ADMIN_SSL: "off"
       KONG_NGINX_USER: "kong kong"
+      KONG_PROXY_SSL_VERIFY: "off"
+      KONG_PROXY_SSL_VERIFY_DEPTH: "1"
+      KONG_CLIENT_SSL: "off"
     ports:
       - "8000:8000"
       - "8001:8001"
@@ -51,14 +54,14 @@ services:
     depends_on:
       - mongo
     networks:
-      - orion-net
+      - kong-net
 
   mongo:
     image: mongo:4.4
     platform: linux/arm64
     command: mongod --nojournal
     networks:
-      - orion-net
+      - kong-net
 
 networks:
   kong-net:

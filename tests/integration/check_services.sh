@@ -15,6 +15,41 @@ check_container() {
     return 0
 }
 
+# Kong Gatewayの設定を検証する関数
+verify_kong_configuration() {
+    echo "Kong Gateway の設定を検証しています..."
+    
+    # サービス設定の検証
+    local service_response=$(curl -s -i http://localhost:8001/services/orion)
+    if ! echo "$service_response" | grep -q "200 OK"; then
+        echo -e "${RED}エラー: Orionサービスが設定されていません${NC}"
+        return 1
+    fi
+
+    # ルート設定の検証
+    local route_response=$(curl -s -i http://localhost:8001/services/orion/routes/orion-route)
+    if ! echo "$route_response" | grep -q "200 OK"; then
+        echo -e "${RED}エラー: Orionルートが設定されていません${NC}"
+        return 1
+    fi
+}
+
+# ルーティングの有効性を検証する関数
+verify_orion_routing() {
+    echo "Orionルーティングの有効性を検証しています..."
+    
+    # バージョン情報の取得（基本的な疎通確認）
+    local version_response=$(curl -s -i http://localhost:8000/orion/version)
+    if ! echo "$version_response" | grep -q "200 OK"; then
+        echo -e "${RED}エラー: Orion APIへのルーティングに失敗しました${NC}"
+        echo "Response: $version_response"
+        return 1
+    fi
+    
+    echo -e "${GREEN}✓ Orionルーティングが正常に機能しています${NC}"
+    return 0
+}
+
 # サービスの状態確認
 echo "サービスの状態を確認しています..."
 sleep 5  # サービスの起動を待つ
@@ -50,6 +85,20 @@ if [ "$failed" = true ]; then
 fi
 
 echo -e "${GREEN}すべてのサービスが正常に起動しています！${NC}"
+
+# Kong Gateway設定の検証
+if ! verify_kong_configuration; then
+    echo -e "${RED}Kong Gateway設定の検証に失敗しました${NC}"
+    cleanup 1
+fi
+
+# ルーティングの有効性確認
+if ! verify_orion_routing; then
+    echo -e "${RED}ルーティングの有効性確認に失敗しました${NC}"
+    cleanup 1
+fi
+
+echo -e "${GREEN}Kong GatewayとOrionの連携が正常に機能しています！${NC}"
 echo "以下のエンドポイントにアクセスできます："
 echo "- Kong Admin API: http://localhost:8001"
 echo "- Kong Proxy: http://localhost:8000"

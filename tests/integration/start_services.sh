@@ -21,7 +21,7 @@ while [ $retry_count -lt $max_retries ]; do
     fi
     retry_count=$((retry_count + 1))
     echo "データベース接続を待機中... ($retry_count/$max_retries)"
-    sleep 3
+    sleep 1
 done
 
 if [ $retry_count -eq $max_retries ]; then

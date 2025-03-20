@@ -2,8 +2,7 @@
 servroot
 # exclude generated packed rocks
 *.rock
-# exclude Pongo directory and files
-.pongo/
+# exclude containerid file
 .containerid
 # exclude development configuration files
 .busted

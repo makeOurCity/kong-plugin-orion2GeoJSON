@@ -39,6 +39,17 @@ export PATH=$PATH:~/.local/bin
 # Pongoの開発環境を初期化
 pongo init
 
+# 開発用のプラグインディレクトリに移動
+cd ~/.kong-pongo/kong-versions/3.4.1/kong-plugin-orion2GeoJSON
+
+# 開発環境のコンテナを起動
+pongo up
+
+# テスト環境のシェルに接続してkmsを実行
+pongo shell
+# シェル内で以下を実行:
+# kms
+
 # この初期化により以下のファイルが生成されます：
 # - .pongo/pongo-setup.sh
 # - .pongo/pongorc

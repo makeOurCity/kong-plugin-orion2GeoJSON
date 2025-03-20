@@ -35,14 +35,24 @@ export PATH=$PATH:~/.local/bin
 ```
 
 3. プロジェクトの初期化:
+### 開発用のプラグインディレクトリに移動して、Pongoの開発環境を初期化する
 ```bash
-# Pongoの開発環境を初期化
+cd kong-plugin-orion2GeoJSON
 pongo init
+```
 
-# この初期化により以下のファイルが生成されます：
-# - .pongo/pongo-setup.sh
-# - .pongo/pongorc
-# - .pongo/postgres-setup.sh
+### 開発環境のコンテナを起動
+```bash
+pongo up
+```
+
+### テスト環境のシェルに接続してkmsを実行
+```bash
+pongo shell
+```
+### シェル内で以下を実行してKong Manager Serviceを起動:
+```bash
+kms
 ```
 
 注意: Pongoは`~/.kong-pongo`ディレクトリを使用して、必要なDockerイメージやバージョン管理を行います。

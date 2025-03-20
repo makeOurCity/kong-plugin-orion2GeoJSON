@@ -1,25 +1,14 @@
-# Development environment configuration files
-.busted
-.editorconfig
-.luacheckrc
-.luacov
-.pongo/
-.pongo/.bash_history
-
-# servroot typically is the Kong working directory for tests
+.kong-pongo/# servroot typically is the Kong working directory for tests
 servroot
-
 # exclude generated packed rocks
 *.rock
-
-# exclude Pongo containerid file
-.containerid
-
+# exclude Pongo shell history
+.pongo/.bash_history
 # exclude LuaCov statistics file
 luacov.stats.out
-
 # exclude LuaCov report
 luacov.report.out
-
 # exclude LuaCov html report
 luacov.report.html
+# exclude Pongo containerid file
+.containerid

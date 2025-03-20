@@ -1,20 +1,18 @@
 local typedefs = require "kong.db.schema.typedefs"
 
 return {
-  name = "custom-plugin",
+  name = "orion2GeoJSON",
   fields = {
-    -- デフォルトのプラグインフィールド
     { consumer = typedefs.no_consumer },
     { protocols = typedefs.protocols_http },
     { config = {
         type = "record",
         fields = {
-          -- ここにプラグイン固有の設定フィールドを追加
-          {
-            example_field = {
+          { output_format = {
               type = "string",
               required = true,
-              default = "default value"
+              default = "FeatureCollection",
+              one_of = { "FeatureCollection", "Feature" }
             }
           }
         }

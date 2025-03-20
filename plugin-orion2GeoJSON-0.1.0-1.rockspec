@@ -1,7 +1,7 @@
 package = "plugin-orion2GeoJSON"
 version = "0.1.0-1"
 source = {
-   url = "git://github.com/yourusername/plugin-orion2GeoJSON",
+   url = "git://github.com/kzkski/plugin-orion2GeoJSON",
    tag = "0.1.0"
 }
 
@@ -11,7 +11,7 @@ description = {
       This Kong plugin intercepts responses from FIWARE Orion Context Broker
       and converts them to GeoJSON format for geographic visualization.
    ]],
-   homepage = "https://github.com/yourusername/plugin-orion2GeoJSON",
+   homepage = "https://github.com/kzkski/plugin-orion2GeoJSON",
    license = "Apache 2.0"
 }
 

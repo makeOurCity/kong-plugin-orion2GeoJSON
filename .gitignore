@@ -1,4 +1,5 @@
-.kong-pongo/# servroot typically is the Kong working directory for tests
+.pongo/.bash_history
+# servroot typically is the Kong working directory for tests
 servroot
 # exclude generated packed rocks
 *.rock

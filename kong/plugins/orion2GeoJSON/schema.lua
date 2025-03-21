@@ -28,6 +28,12 @@ return {
               default = "FeatureCollection",
               one_of = { "FeatureCollection", "Feature" }
             }
+          },
+          { conditional_transform = {
+              type = "boolean",
+              required = true,
+              default = false
+            }
           }
         }
       }

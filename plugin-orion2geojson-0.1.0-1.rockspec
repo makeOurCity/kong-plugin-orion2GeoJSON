@@ -23,7 +23,7 @@ dependencies = {
 build = {
    type = "builtin",
    modules = {
-      ["kong.plugins.plugin-orionGeoJSON.handler"] = "kong/plugins/plugin-orionGeoJSON/handler.lua",
-      ["kong.plugins.plugin-orionGeoJSON.schema"] = "kong/plugins/plugin-orionGeoJSON/schema.lua"
+      ["kong.plugins.orion2GeoJSON.handler"] = "kong/plugins/orion2GeoJSON/handler.lua",
+      ["kong.plugins.orion2GeoJSON.schema"] = "kong/plugins/orion2GeoJSON/schema.lua"
    }
 }

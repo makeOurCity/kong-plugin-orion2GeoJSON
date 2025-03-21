@@ -6,7 +6,7 @@ local OrionGeoJSONHandler = {
 }
 
 -- ヘルパー関数: ダミーデータの生成
-local function generate_dummy_data(original_data)
+local function generate_dummy_data(error_type, original_data, details)
   return {
     type = "Feature",
     geometry = {
@@ -14,50 +14,68 @@ local function generate_dummy_data(original_data)
       coordinates = {0, 0}
     },
     properties = {
-      error = "conversion_failed",
+      error = error_type,
+      details = details or "",
       original_data = original_data
     }
   }
 end
 
 -- ヘルパー関数: 単一エンティティの変換
-local function convert_single_entity(entity)
-  local geometries = {}
-  local properties = {}
+local function convert_single_entity(entity, conf)
+  -- entity_typeの検証
+  if not entity.type or entity.type ~= conf.entity_type then
+    return generate_dummy_data(
+      "invalid_entity_type",
+      entity,
+      string.format("Expected type '%s', got '%s'", conf.entity_type, entity.type or "nil")
+    )
+  end
 
+  -- location_attrの検証と変換
+  if not entity[conf.location_attr] then
+    return generate_dummy_data(
+      "location_attr_not_found",
+      entity,
+      string.format("Attribute '%s' not found", conf.location_attr)
+    )
+  end
+
+  local location = entity[conf.location_attr]
+  if type(location) ~= "table" or location.type ~= "geo:json" or not location.value then
+    return generate_dummy_data(
+      "invalid_location_format",
+      entity,
+      string.format("Invalid format for location attribute '%s'", conf.location_attr)
+    )
+  end
+
+  -- プロパティの抽出
+  local properties = {}
   for attr_name, attr in pairs(entity) do
-    if type(attr) == "table" and attr.type == "geo:json" then
-      geometries[attr_name] = attr.value
-    elseif type(attr) == "table" and attr.value then
+    if type(attr) == "table" and attr.value and attr_name ~= conf.location_attr then
       properties[attr_name] = attr.value
     end
   end
 
-  -- geo:json属性が見つからない場合はダミーデータを返す
-  if not next(geometries) then
-    return generate_dummy_data(entity)
-  end
-
-  -- 最初に見つかったgeo:json属性を使用
-  local geometry_name, geometry = next(geometries)
   return {
     type = "Feature",
-    geometry = geometry,
+    geometry = location.value,
     properties = properties
   }
 end
 
 -- ヘルパー関数: エンティティ配列の変換
-local function convert_entity_array(entities, output_format)
-  if output_format == "Feature" then
+local function convert_entity_array(entities, conf)
+  if conf.output_format == "Feature" then
     -- 最初のエンティティのみを変換
-    return convert_single_entity(entities[1] or {})
+    return convert_single_entity(entities[1] or {}, conf)
   end
 
   -- FeatureCollection形式での変換
   local features = {}
   for _, entity in ipairs(entities) do
-    table.insert(features, convert_single_entity(entity))
+    table.insert(features, convert_single_entity(entity, conf))
   end
 
   return {
@@ -71,7 +89,7 @@ function OrionGeoJSONHandler:header_filter(conf)
 end
 
 function OrionGeoJSONHandler:body_filter(conf)
-  local chunk, eof = ngx.arg[1], ngx.arg[2]
+  local _, eof = ngx.arg[1], ngx.arg[2]
   if not eof then
     return
   end
@@ -81,7 +99,7 @@ function OrionGeoJSONHandler:body_filter(conf)
   local success, data = pcall(cjson.decode, body)
   if not success then
     -- JSONパースエラーの場合はダミーデータを返す
-    local dummy = generate_dummy_data({ error = "invalid_json" })
+    local dummy = generate_dummy_data("invalid_json", { error = "Failed to parse JSON" })
     ngx.arg[1] = cjson.encode(dummy)
     return
   end
@@ -90,10 +108,10 @@ function OrionGeoJSONHandler:body_filter(conf)
   local result
   if type(data) == "table" and data[1] then
     -- 配列の場合
-    result = convert_entity_array(data, conf.output_format)
+    result = convert_entity_array(data, conf)
   else
     -- 単一エンティティの場合
-    result = convert_single_entity(data)
+    result = convert_single_entity(data, conf)
   end
 
   ngx.arg[1] = cjson.encode(result)

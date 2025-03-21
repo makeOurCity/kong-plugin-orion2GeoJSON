@@ -11,15 +11,13 @@ return {
           { entity_type = {
               type = "string",
               required = true,
-              match = "^[a-zA-Z0-9_-]+$",
-              match_error = "must only contain alphanumeric characters, hyphens, and underscores"
+              default = "Room"
             }
           },
           { location_attr = {
               type = "string",
               required = true,
-              match = "^[a-zA-Z0-9_-]+$",
-              match_error = "must only contain alphanumeric characters, hyphens, and underscores"
+              default = "location"
             }
           },
           { output_format = {

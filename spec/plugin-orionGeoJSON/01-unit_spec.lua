@@ -57,10 +57,10 @@ local sample_entity_array = {
 -- モック設定
 local function setup_kong_mock()
   local response_data = ""
-  local arg1 = ""
+  local arg1_value = ""
   _G.ngx = {
     arg = {
-      [1] = arg1,
+      [1] = arg1_value,
       [2] = true
     },
     ctx = {}
@@ -85,7 +85,6 @@ local function setup_kong_mock()
         return response_data
       end,
       set_arg1 = function(value)
-        arg1 = value
         _G.ngx.arg[1] = value
       end
     }

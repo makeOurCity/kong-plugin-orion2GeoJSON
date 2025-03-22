@@ -7,6 +7,28 @@
 | entity_type | はい | - | 変換対象のエンティティタイプ（例：Room, Car など）。アルファベット、数字、ハイフン、アンダースコアのみ使用可能。 |
 | location_attr | はい | - | 位置情報を含む属性名（例：location）。アルファベット、数字、ハイフン、アンダースコアのみ使用可能。 |
 | output_format | はい | FeatureCollection | 出力形式。"FeatureCollection"（複数エンティティ）または"Feature"（単一エンティティ）。 |
+| conditional_transform | いいえ | true | trueの場合、format=geojsonクエリパラメータがある場合のみ変換。falseの場合は常に変換。 |
+
+## GeoJSON変換の制御方法
+
+### クエリパラメータを使用する方法
+
+```bash
+# format=geojsonパラメータを使用
+curl 'http://localhost:8000/orion/v2/entities/Room1?type=Room&format=geojson'
+```
+
+### 常に変換する方法
+
+プラグインの設定で`conditional_transform=false`を指定：
+
+```bash
+# プラグイン設定の更新
+curl -X PATCH http://localhost:8001/services/orion/plugins/{plugin_id} \
+  --data config.conditional_transform=false
+```
+
+この場合、すべてのリクエストでGeoJSON形式に変換されます。
 
 ## 使用例
 
@@ -14,7 +36,8 @@
 
 #### リクエスト
 ```bash
-curl 'http://localhost:8000/orion/v2/entities/Room1?type=Room'
+# クエリパラメータを使用
+curl 'http://localhost:8000/orion/v2/entities/Room1?type=Room&format=geojson'
 ```
 
 #### レスポンス（Feature形式）
@@ -36,7 +59,8 @@ curl 'http://localhost:8000/orion/v2/entities/Room1?type=Room'
 
 #### リクエスト
 ```bash
-curl 'http://localhost:8000/orion/v2/entities?type=Room'
+# クエリパラメータを使用
+curl 'http://localhost:8000/orion/v2/entities?type=Room&format=geojson'
 ```
 
 #### レスポンス（FeatureCollection形式）
@@ -133,3 +157,5 @@ location_attrで指定された属性が見つからない場合：
 2. エラー時も常に有効なGeoJSONが返されます
 3. エラーの場合、座標は[0, 0]にデフォルト設定されます
 4. propertiesには位置情報属性以外のすべての属性値が含まれます
+5. `format=geojson`クエリパラメータを使用して変換を制御できます
+6. `conditional_transform=false`に設定すると、すべてのレスポンスがGeoJSON形式になります

@@ -242,11 +242,6 @@ curl -s http://localhost:8000/orion/v2/entities?type=Room | jq
 # GeoJSON形式での取得（format=geojsonを使用）
 echo "=== GeoJSON形式でのRoom型エンティティ一覧（クエリパラメータ使用） ==="
 curl -s 'http://localhost:8000/orion/v2/entities?type=Room&format=geojson' | jq
-
-# GeoJSON形式での取得（Acceptヘッダー使用）
-echo "=== GeoJSON形式でのRoom型エンティティ一覧（Acceptヘッダー使用） ==="
-curl -s -H 'Accept: application/geo+json' \
-  'http://localhost:8000/orion/v2/entities?type=Room' | jq
 ```
 
 4. プラグインの動作確認：
@@ -281,23 +276,7 @@ curl -s 'http://localhost:8000/orion/v2/entities/RoomNoLocation?format=geojson' 
 
 6. テスト環境のクリーンアップ：
 ```bash
-# テストエンティティの削除
-curl -i -X DELETE http://localhost:8000/orion/v2/entities/Room1
-curl -i -X DELETE http://localhost:8000/orion/v2/entities/Room2
-curl -i -X DELETE http://localhost:8000/orion/v2/entities/Room3
-curl -i -X DELETE http://localhost:8000/orion/v2/entities/Sensor1
-curl -i -X DELETE http://localhost:8000/orion/v2/entities/RoomNoLocation
-
-# プラグイン設定の確認と削除
-echo "=== プラグイン一覧 ==="
-curl -s http://localhost:8001/services/orion/plugins | jq
-echo "上記のプラグインIDを使用して削除："
-echo "curl -i -X DELETE http://localhost:8001/services/orion/plugins/{plugin_id}"
-
-# サービスとルートのクリーンアップ
-curl -i -X DELETE http://localhost:8001/services/orion
-
-# テスト環境の停止
+# テスト環境の停止だけで、すべて破棄されます
 pongo down
 ```
 

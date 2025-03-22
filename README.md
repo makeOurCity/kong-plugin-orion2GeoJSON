@@ -138,8 +138,7 @@ curl localhost:8000/orion/v2/entities
 
 - [詳細な使用方法](docs/usage.md)
 - [開発者向けドキュメント](docs/implementation.md)
-- [テストガイド](docs/test.md)
-- [テストケース仕様](docs/test_cases.md)
+- [テストドキュメント](docs/test/README.md)
 
 ## 動作環境
 

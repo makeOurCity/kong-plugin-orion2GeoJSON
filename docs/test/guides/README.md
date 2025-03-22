@@ -192,6 +192,6 @@ rm -rf tests/output/*
 ## 次のステップ
 
 セットアップ完了後：
-1. [テスト実行ガイド](guides/running.md)を参照
+1. [テスト実行ガイド](running.md)を参照
 2. [テストケース](test_cases/)を確認
-3. 必要に応じて[トラブルシューティングガイド](guides/troubleshooting.md)を参照
+3. 必要に応じて[トラブルシューティングガイド](troubleshooting.md)を参照

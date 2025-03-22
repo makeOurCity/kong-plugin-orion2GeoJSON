@@ -248,4 +248,4 @@ jobs:
 
 - [テストケースドキュメント](../test_cases/)
 - [トラブルシューティングガイド](troubleshooting.md)
-- [Kongテストフレームワークドキュメント](https://docs.konghq.com/gateway/latest/reference/test-framework/)
+- [Pongoテストフレームワーク](https://github.com/Kong/kong-pongo)

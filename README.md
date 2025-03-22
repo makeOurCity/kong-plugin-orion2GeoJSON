@@ -2,179 +2,150 @@
 
 このKongプラグインは、FIWARE Orion Context Brokerからのレスポンスをインターセプトし、GeoJSON形式に変換するためのものです。
 
-## ファイル構造
+## プラグイン概要
 
+FIWARE OrionのNGSI v2レスポンスをGeoJSON形式に変換するKongプラグインです。エンティティの位置情報を抽出し、標準的なGeoJSON形式で提供します。
+
+## 技術アーキテクチャ
+
+### プラグインの構成
 ```
-.
-├── .pongo/
-│   ├── pongorc        # Pongo依存サービス定義
-│   ├── orion.yml      # Orionコンテナ設定
-│   └── mongo.yml      # MongoDBコンテナ設定
-├── kong/
-│   └── plugins/
-│       └── plugin-orionGeoJSON/
-│           ├── handler.lua          # プラグインのメインロジック
-│           └── schema.lua           # プラグイン設定のスキーマ定義
-├── spec/
-│   └── plugin-orionGeoJSON/
-│       └── 01-unit_spec.lua        # ユニットテスト
-└── plugin-orion2GeoJSON-0.1.0-1.rockspec  # パッケージング設定
-
-~/.kong-pongo/                       # Pongoのグローバル設定ディレクトリ
-├── kong-versions/                   # 各バージョンのKongイメージ
-├── kong-ee-versions/               # エンタープライズ版Kongイメージ（必要な場合）
-└── images/                         # その他の依存イメージ
+kong/plugins/orion2GeoJSON/
+├── handler.lua  # メイン処理ロジック
+└── schema.lua   # 設定スキーマ定義
 ```
 
-## 開発環境のセットアップ
+### 処理フロー
+1. リクエスト受信
+2. レスポンスボディの取得（body_filterフェーズ）
+3. エンティティタイプと位置情報の検証
+4. GeoJSON形式への変換
+5. レスポンスの返却
 
-1. Pongoのインストール:
+## 設定パラメータ
+
+| パラメータ | 必須 | デフォルト値 | 説明 |
+|------------|------|--------------|------|
+| entity_type | はい | - | 変換対象のエンティティタイプ（例：Room, Car など）。アルファベット、数字、ハイフン、アンダースコアのみ使用可能。 |
+| location_attr | はい | - | 位置情報を含む属性名（例：location）。アルファベット、数字、ハイフン、アンダースコアのみ使用可能。 |
+| output_format | はい | FeatureCollection | 出力形式。"FeatureCollection"（複数エンティティ）または"Feature"（単一エンティティ）。 |
+
+## 使用例
+
+### 1. 単一エンティティの変換
+
+#### リクエスト
 ```bash
-curl -Ls https://get.konghq.com/pongo | bash
+curl 'http://localhost:8000/orion/v2/entities/Room1?type=Room'
 ```
 
-2. 環境変数のセットアップ:
+#### レスポンス（Feature形式）
+```json
+{
+  "type": "Feature",
+  "geometry": {
+    "type": "Point",
+    "coordinates": [13.3986112, 52.554699]
+  },
+  "properties": {
+    "temperature": 23,
+    "humidity": 45
+  }
+}
+```
+
+### 2. 複数エンティティの変換
+
+#### リクエスト
 ```bash
-export PATH=$PATH:~/.local/bin
+curl 'http://localhost:8000/orion/v2/entities?type=Room'
 ```
 
-3. プロジェクトの初期化:
-```bash
-# 開発用のプラグインディレクトリに移動
-cd kong-plugin-orion2GeoJSON
-
-# Pongoの開発環境を初期化
-pongo init
-
-# 必要なファイルを作成
-mkdir -p .pongo
-```
-
-4. Pongo設定ファイルの作成:
-
-a. .pongrcファイル:
-```bash
---postgres  # PostgreSQLは標準で含まれています
---orion
---mongo
-```
-
-b. .pongo/orion.yml:
-```yaml
-services:
-  orion:
-    image: fiware/orion:3.10.1
-    depends_on:
-      mongo:
-        condition: service_healthy
-    healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:1026/version"]
-      interval: 5s
-      retries: 5
-    networks:
-      - ${NETWORK_NAME}
-```
-
-c. .pongo/mongo.yml:
-```yaml
-services:
-  mongo:
-    image: mongo:4.4
-    command: mongod --nojournal
-    healthcheck:
-      test: ["CMD", "mongo", "--eval", "db.adminCommand('ping')"]
-      interval: 5s
-      timeout: 5s
-      retries: 5
-    networks:
-      - ${NETWORK_NAME}
-```
-
-5. 開発環境の起動:
-```bash
-# テスト環境のコンテナを起動
-pongo up
-```
-
-## テストデータの作成
-
-以下は、テストで使用する位置情報を含むエンティティの例です：
-
-```bash
-# エンティティの作成
-curl -X POST \
-  'http://localhost:8000/orion/v2/entities' \
-  -H 'Content-Type: application/json' \
-  -d '{
-    "id": "Room1",
-    "type": "Room",
-    "temperature": {
-      "value": 23,
-      "type": "Float"
-    },
-    "location": {
-      "value": {
+#### レスポンス（FeatureCollection形式）
+```json
+{
+  "type": "FeatureCollection",
+  "features": [
+    {
+      "type": "Feature",
+      "geometry": {
         "type": "Point",
         "coordinates": [13.3986112, 52.554699]
       },
-      "type": "geo:json"
+      "properties": {
+        "temperature": 23
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [13.3986113, 52.554700]
+      },
+      "properties": {
+        "temperature": 25
+      }
     }
-  }'
+  ]
+}
 ```
 
-## 開発とテスト
+## テスト環境のセットアップ
 
-Pongoを使用してテストを実行:
+### 1. プロジェクトのセットアップ
+```bash
+# リポジトリのクローン
+git clone https://github.com/[username]/kong-plugin-orion2GeoJSON.git
+cd kong-plugin-orion2GeoJSON
 
+# Pongoのインストール（初回のみ）
+curl -Ls https://get.konghq.com/pongo | bash
+export PATH=$PATH:~/.local/bin
+```
+
+## テストの実行
+
+### 1. 自動テストの実行
 ```bash
 # すべてのテストを実行
 pongo run
 
-# 特定のテストの実行
+# 特定のテストファイルを実行
 pongo run spec/plugin-orionGeoJSON/01-unit_spec.lua
+```
 
-# テスト環境のシェルにアクセス
+### 2. 手動テストの実行
+
+#### テスト環境の起動
+```bash
+# テスト環境の起動
+pongo up
+
+# テスト用シェルの起動
 pongo shell
-
-# テスト環境のクリーンアップ
-pongo down
 ```
 
-## プラグインの設定
-
-Kongの設定ファイル（`kong.conf`）にプラグインを追加:
+#### プラグインのテスト
 ```bash
-plugins = bundled,plugin-orionGeoJSON
+# Luaインタープリタの起動
+luarocks test
+
+# プラグインの動作確認
+curl localhost:8000/orion/v2/entities
 ```
 
-プラグインの基本的な設定例：
+## 詳細ドキュメント
 
-```yaml
-plugins:
-  - name: plugin-orionGeoJSON
-    config:
-      example_field: "custom value"
-```
+- [詳細な使用方法](docs/usage.md)
+- [開発者向けドキュメント](docs/implementation.md)
+- [テストガイド](docs/test.md)
+- [テストケース仕様](docs/test_cases.md)
 
-## プロダクション環境へのデプロイ
+## 動作環境
 
-1. プラグインをインストール:
-```bash
-luarocks make
-```
-
-2. Kongを再起動:
-```bash
-kong restart
-```
-
-## 注意点
-
-- PostgreSQLはKong Pongoに標準で含まれており、追加設定は不要です
-- Orion v3.10.1とMongoDB 4.4を使用しています
-- Orionはmongoサービスの正常起動を待って起動します
-- すべてのサービスは同じPongoネットワーク上で動作します
-- テスト環境では認証は無効化されています
+- Kong Gateway
+- Orion v3.10.1
+- MongoDB 4.4
 
 ## ライセンス
 

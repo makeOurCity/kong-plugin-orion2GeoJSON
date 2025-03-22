@@ -8,14 +8,14 @@
 
 ```
 docs/test/
-├── README.md          # 本ファイル - 概要と構造
-├── setup.md          # 環境セットアップガイド
-├── test_cases/       # テストケース仕様
-│   ├── unit.md      # ユニットテストケース
-│   ├── integration.md# 統合テストケース
-│   └── performance.md# パフォーマンステストケース
-└── guides/           # テストガイド
-    ├── running.md    # テスト実行手順
+├── README.md              # 本ファイル - 概要と構造
+├── test_cases/            # テストケース仕様
+│   ├── README.md          # ユニットテストケース
+│   ├── integration.md     # 統合テストケース
+│   └── performance.md     # パフォーマンステストケース
+└── guides/                # テストガイド
+    ├── README.md          # 環境セットアップガイド
+    ├── running.md         # テスト実行手順
     └── troubleshooting.md # トラブルシューティング
 ```
 
@@ -55,23 +55,13 @@ docs/test/
 
 ## クイックスタート
 
-1. 環境のセットアップ：
-   ```bash
-   # setup.mdの手順に従ってください
-   ```
+1. 環境のセットアップ： [環境セットアップガイド](guides/)
 
-2. テストの実行：
-   ```bash
-   # guides/running.mdの手順に従ってください
-   ```
+2. テストの実行：[テスト実行手順](guides/running.md)
 
 3. 結果の確認：
    - テストレポートの場所
    - カバレッジレポート
    - ログファイル
 
-## 追加リソース
-
-- [テスト作成ガイド](test_cases/README.md)
-- [トラブルシューティングガイド](guides/troubleshooting.md)
-- [CI/CD統合](setup.md#ci-cd)
+4. テストケース: [テストケース詳細](test_cases/)

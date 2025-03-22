@@ -74,6 +74,233 @@ pongo run spec/plugin-orionGeoJSON/03-performance_spec.lua
 pongo run --perf-output=perf.json spec/plugin-orionGeoJSON/03-performance_spec.lua
 ```
 
+### 4. 手動テスト実行
+
+手動テストでは、実際のKong環境でプラグインの動作を確認します。データベース付きのKongを起動し、手動でサービスとルートを設定して、エンドツーエンドのテストを行います。
+
+#### 手動テスト環境のセットアップ
+
+1. データベース付きKongの起動：
+```bash
+# PostgreSQLとKongを起動（データベースモード）
+pongo run migrations up  # データベースマイグレーション
+KONG_DATABASE=postgres pongo up  # DBモードでKong起動
+
+# Kongの状態確認
+curl -i http://localhost:8001
+```
+
+2. プラグインのインストール：
+```bash
+# プラグインのビルドとインストール
+pongo shell
+```
+```bash
+# 以後、Pongo shell内で実行する
+# Kongをデータベース付きで起動する
+kms
+```
+
+```bash
+# プラグインが正しくロードされているか確認
+curl -s http://localhost:8001/plugins/enabled | jq | grep orion2GeoJSON
+```
+
+#### サービスとルートの設定
+
+1. Orionサービスの登録：
+```bash
+# Orionサービスの作成
+curl -i -X POST http://localhost:8001/services \
+  --data name=orion \
+  --data url=http://orion:1026
+
+# Orionサービスにルートを追加
+curl -i -X POST http://localhost:8001/services/orion/routes \
+  --data paths[]=/orion \
+  --data strip_path=true
+
+# サービスとルートの確認
+curl -s http://localhost:8001/services/orion | jq
+curl -s http://localhost:8001/services/orion/routes | jq
+```
+
+2. プラグインの有効化：
+```bash
+# サービスにプラグインを適用
+curl -i -X POST http://localhost:8001/services/orion/plugins \
+  --data name=orion2GeoJSON \
+  --data config.entity_type=Room \
+  --data config.location_attr=location
+
+# プラグインの設定を確認
+curl -s http://localhost:8001/services/orion/plugins | jq
+```
+
+#### テストデータの作成と検証
+
+1. 正常系のテストエンティティ作成：
+```bash
+# Room1: 基本的なケース
+curl -i -X POST http://localhost:8000/orion/v2/entities \
+  -H 'Content-Type: application/json' \
+  -d '{
+    "id": "Room1",
+    "type": "Room",
+    "temperature": {
+      "value": 23,
+      "type": "Float"
+    },
+    "location": {
+      "value": {
+        "type": "Point",
+        "coordinates": [13.3986112, 52.554699]
+      },
+      "type": "geo:json"
+    }
+  }'
+
+# Room2: 異なる座標と温度
+curl -i -X POST http://localhost:8000/orion/v2/entities \
+  -H 'Content-Type: application/json' \
+  -d '{
+    "id": "Room2",
+    "type": "Room",
+    "temperature": {
+      "value": 25,
+      "type": "Float"
+    },
+    "location": {
+      "value": {
+        "type": "Point",
+        "coordinates": [13.3987000, 52.554800]
+      },
+      "type": "geo:json"
+    }
+  }'
+
+# Room3: さらに異なる座標と温度
+curl -i -X POST http://localhost:8000/orion/v2/entities \
+  -H 'Content-Type: application/json' \
+  -d '{
+    "id": "Room3",
+    "type": "Room",
+    "temperature": {
+      "value": 21,
+      "type": "Float"
+    },
+    "location": {
+      "value": {
+        "type": "Point",
+        "coordinates": [13.3985000, 52.554600]
+      },
+      "type": "geo:json"
+    }
+  }'
+```
+
+2. エラーケース用のテストエンティティ作成：
+```bash
+# 異なるタイプのエンティティ
+curl -i -X POST http://localhost:8000/orion/v2/entities \
+  -H 'Content-Type: application/json' \
+  -d '{
+    "id": "Sensor1",
+    "type": "Sensor",
+    "location": {
+      "value": {
+        "type": "Point",
+        "coordinates": [13.3986, 52.5547]
+      },
+      "type": "geo:json"
+    }
+  }'
+
+# 位置情報なしのエンティティ
+curl -i -X POST http://localhost:8000/orion/v2/entities \
+  -H 'Content-Type: application/json' \
+  -d '{
+    "id": "RoomNoLocation",
+    "type": "Room",
+    "temperature": {
+      "value": 25,
+      "type": "Float"
+    }
+  }'
+```
+
+3. 作成したエンティティの確認：
+```bash
+# 全エンティティの一覧を取得（Orion形式）
+echo "=== Orion形式での全エンティティ一覧 ==="
+curl -s http://localhost:8000/orion/v2/entities | jq
+
+# Room型エンティティの一覧をOrion形式で確認
+echo "=== Orion形式でのRoom型エンティティ一覧 ==="
+curl -s http://localhost:8000/orion/v2/entities?type=Room | jq
+
+# GeoJSON形式での取得（format=geojsonを使用）
+echo "=== GeoJSON形式でのRoom型エンティティ一覧（クエリパラメータ使用） ==="
+curl -s 'http://localhost:8000/orion/v2/entities?type=Room&format=geojson' | jq
+
+# GeoJSON形式での取得（Acceptヘッダー使用）
+echo "=== GeoJSON形式でのRoom型エンティティ一覧（Acceptヘッダー使用） ==="
+curl -s -H 'Accept: application/geo+json' \
+  'http://localhost:8000/orion/v2/entities?type=Room' | jq
+```
+
+4. プラグインの動作確認：
+```bash
+# 条件付き変換の無効化をテスト
+echo "=== conditional_transform=falseの場合（常に変換） ==="
+curl -i -X PATCH http://localhost:8001/services/orion/plugins/{plugin_id} \
+  --data config.conditional_transform=false
+
+# 通常のリクエストでもGeoJSON形式で取得できることを確認
+echo "=== 通常のリクエストでもGeoJSON形式で取得 ==="
+curl -s 'http://localhost:8000/orion/v2/entities?type=Room' | jq
+
+# クエリパラメータとの組み合わせテスト
+echo "=== limitパラメータとの組み合わせ ==="
+curl -s 'http://localhost:8000/orion/v2/entities?type=Room&format=geojson&limit=2' | jq
+
+echo "=== offsetパラメータとの組み合わせ ==="
+curl -s 'http://localhost:8000/orion/v2/entities?type=Room&format=geojson&offset=1' | jq
+```
+
+5. エラーケースの確認：
+```bash
+# 異なるタイプのエンティティの変換を試行
+echo "=== 異なるタイプ（Sensor）のエンティティ変換試行 ==="
+curl -s 'http://localhost:8000/orion/v2/entities/Sensor1?format=geojson' | jq
+
+# 位置情報なしのエンティティの変換を試行
+echo "=== 位置情報なしのエンティティ変換試行 ==="
+curl -s 'http://localhost:8000/orion/v2/entities/RoomNoLocation?format=geojson' | jq
+```
+
+6. テスト環境のクリーンアップ：
+```bash
+# テストエンティティの削除
+curl -i -X DELETE http://localhost:8000/orion/v2/entities/Room1
+curl -i -X DELETE http://localhost:8000/orion/v2/entities/Room2
+curl -i -X DELETE http://localhost:8000/orion/v2/entities/Room3
+curl -i -X DELETE http://localhost:8000/orion/v2/entities/Sensor1
+curl -i -X DELETE http://localhost:8000/orion/v2/entities/RoomNoLocation
+
+# プラグイン設定の確認と削除
+echo "=== プラグイン一覧 ==="
+curl -s http://localhost:8001/services/orion/plugins | jq
+echo "上記のプラグインIDを使用して削除："
+echo "curl -i -X DELETE http://localhost:8001/services/orion/plugins/{plugin_id}"
+
+# サービスとルートのクリーンアップ
+curl -i -X DELETE http://localhost:8001/services/orion
+
+# テスト環境の停止
+pongo down
+```
+
 ## テストワークフロー
 
 ### 1. 開発ワークフロー

@@ -30,7 +30,7 @@ return {
           { conditional_transform = {
               type = "boolean",
               required = true,
-              default = false
+              default = true
             }
           }
         }

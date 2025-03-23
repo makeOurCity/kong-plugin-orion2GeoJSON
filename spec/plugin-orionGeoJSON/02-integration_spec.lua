@@ -31,10 +31,11 @@ describe(PLUGIN_NAME .. ": (integration)", function()
       }
     })
 
-    -- Kongの起動
+    -- Kongの起動（プラグインを有効化）
     assert(helpers.start_kong({
       database = "postgres",
-      plugins = "bundled," .. PLUGIN_NAME
+      plugins = "bundled," .. PLUGIN_NAME,
+      custom_plugins = PLUGIN_NAME
     }))
 
     -- HTTPクライアントの初期化

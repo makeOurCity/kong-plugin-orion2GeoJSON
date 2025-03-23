@@ -20,6 +20,13 @@ describe(PLUGIN_NAME .. ": (integration)", function()
       paths = { "/orion" }
     })
 
+    -- Kongの起動（プラグインを有効化）
+    assert(helpers.start_kong({
+      database = "postgres",
+      plugins = "bundled," .. PLUGIN_NAME,
+      custom_plugins = PLUGIN_NAME
+    }))
+
     -- プラグインの設定
     bp.plugins:insert({
       name = PLUGIN_NAME,
@@ -30,13 +37,6 @@ describe(PLUGIN_NAME .. ": (integration)", function()
         output_format = "FeatureCollection"
       }
     })
-
-    -- Kongの起動（プラグインを有効化）
-    assert(helpers.start_kong({
-      database = "postgres",
-      plugins = "bundled," .. PLUGIN_NAME,
-      custom_plugins = PLUGIN_NAME
-    }))
 
     -- HTTPクライアントの初期化
     client = helpers.proxy_client()

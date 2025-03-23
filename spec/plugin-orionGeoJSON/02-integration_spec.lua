@@ -19,15 +19,15 @@ describe(PLUGIN_NAME .. ": (integration)", function()
 
     -- サービスの作成
     local service = bp.services:insert({
-      name = "orion-test",
+      name = "orion",
       url = "http://orion:1026"
     })
 
     -- ルートの作成
     local route = bp.routes:insert({
-      paths = { "/v2/entities", "/v2/entities/(?.*)" },
+      paths = { "/orion" },
       service = service,
-      strip_path = false
+      strip_path = true
     })
 
     -- プラグインの設定
@@ -104,7 +104,7 @@ describe(PLUGIN_NAME .. ": (integration)", function()
       -- 最小限のチェック：Kongプロキシへの接続が成功していることを確認
       local res = assert(proxy_client:send({
         method = "GET",
-        path = "/v2/entities",
+        path = "/orion/v2/entities",
         headers = {
           ["Accept"] = "application/json"
         }
